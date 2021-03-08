@@ -225,21 +225,31 @@ def get_all_pairs(predictions, token_mask, pattern_r):
         # map AC last token id to ac_id
         ac_end_token2id = dict(zip(ac_end_id, range(len(ac_end_id))))
 
-        # get all possible pair combinations of the AC last token
-        end_r = list(map(list, zip(*it.combinations(ac_end_id, 2))))
-        end_r1 = torch.tensor(end_r[0], device=device)  # 1st item in the pair
-        end_r2 = torch.tensor(end_r[1], device=device)  # 2nd item in the pair
+        if len(ac_len) > 1:
+            # get all possible pair combinations of the AC last token
+            end_r = list(map(list, zip(*it.combinations(ac_end_id, 2))))
+            # 1st item and 2nd item in the pair
+            end_r1 = torch.tensor(end_r[0], device=device)
+            end_r2 = torch.tensor(end_r[1], device=device)
 
-        #  pair in term of: AC id
-        ac1_id = [ac_end_token2id[r1.item() - 1] for r1 in end_r1]
-        ac2_id = [ac_end_token2id[r2.item() - 1] for r2 in end_r2]
+            #  pair in term of: AC id
+            ac1_id = [ac_end_token2id[r1.item()] for r1 in end_r1]
+            ac2_id = [ac_end_token2id[r2.item()] for r2 in end_r2]
 
-        # pair in term of: range(AC_start : AC_end)
-        strt_r = list(map(list, zip(*it.combinations(ac_start_id, 2))))
-        strt_r1 = torch.tensor(strt_r[0], device=torch.device('cpu'))
-        strt_r2 = torch.tensor(strt_r[1], device=torch.device('cpu'))
-        ac1_r_idx = list(map(torch.arange, strt_r1, end_r1))
-        ac2_r_idx = list(map(torch.arange, strt_r2, end_r2))
+            # pair in term of: range(AC_start : AC_end)
+            strt_r = list(map(list, zip(*it.combinations(ac_start_id, 2))))
+            strt_r1 = torch.tensor(strt_r[0], device=torch.device('cpu'))
+            strt_r2 = torch.tensor(strt_r[1], device=torch.device('cpu'))
+            ac1_r_idx = list(map(torch.arange, strt_r1, end_r1))
+            ac2_r_idx = list(map(torch.arange, strt_r2, end_r2))
+
+        else:
+            ac1_id = None
+            ac2_id = None
+            ac1_r_idx = None
+            ac2_r_idx = None
+            end_r1 = torch.empty(0)
+            end_r2 = torch.empty(0)
 
         yield i, (ac1_id, ac2_id), (ac1_r_idx,
                                     ac2_r_idx), (end_r1,
